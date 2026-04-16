@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import altair as alt
 from sentence_transformers import SentenceTransformer
-from drawdata import ScatterWidget
 
 # import data set
 df = pd.read_csv('../data/chemicals.csv')
@@ -47,9 +45,10 @@ axis1_pos = [
     'Explosive',
     'Toxic',
     'Corrosive',
+    'Caustic'
     'Lethal',
     'Hazardous',
-    'Reactive'
+    'Reactive',
 ]
 
 axis1_neg = [
@@ -81,7 +80,31 @@ axis2_neg = [
 ]
 axis_utility = make_axis(axis2_pos, axis2_neg, model)
 
-x = score_words(df["city"].tolist(), axis_stability, model)
-y = score_words(df["city"].tolist(), axis_utility, model)
+# socre the chemicals based on axes and add to dataframe
+x = score_words(df["name"].tolist(), axis_stability, model)
+y = score_words(df["name"].tolist(), axis_utility, model)
 df_scored = df.assign(x=x, y=y)
 
+# Create figure
+plt.figure(figsize=(10, 8))
+plt.scatter(df_scored["x"], df_scored["y"])
+
+# Label each point with the chemical name
+for i, txt in enumerate(df_scored["name"]):
+    plt.annotate(txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=8, alpha=0.7)
+
+# Axis labels and title
+plt.xlabel("Stability Axis (Hazardous  →  Safe)")
+plt.ylabel("Utility Axis (Industrial  →  Biological)")
+plt.title("Chemical SemAxis Visualization")
+
+# Draw reference lines at origin
+plt.axhline(0)
+plt.axvline(0)
+
+# Improve layout
+plt.grid(True)
+plt.tight_layout()
+
+# Show plot
+plt.show()
