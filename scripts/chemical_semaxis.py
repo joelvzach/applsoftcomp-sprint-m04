@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 from drawdata import ScatterWidget
 
 # import data set
-data = pd.read_csv('../data/chemicals.csv')
+df = pd.read_csv('../data/chemicals.csv')
 
 # create sentence transformer model
 model = SentenceTransformer("all-mpnet-base-v2")  
@@ -80,4 +80,8 @@ axis2_neg = [
     'Mineral'
 ]
 axis_utility = make_axis(axis2_pos, axis2_neg, model)
+
+x = score_words(df["city"].tolist(), axis_stability, model)
+y = score_words(df["city"].tolist(), axis_utility, model)
+df_scored = df.assign(x=x, y=y)
 
