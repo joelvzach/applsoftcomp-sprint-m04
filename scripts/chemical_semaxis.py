@@ -107,4 +107,5 @@ plt.grid(True)
 plt.tight_layout()
 
 # Show plot
+plt.savefig('figures/semaxis.png')
 plt.show()
