@@ -43,20 +43,20 @@ def score_words(words, axis, embedding_model):
 
 # create first axis for safety of chemicals i.e. dangerous or safe
 axis1_pos = [
-    'Toxic',
-    'Poisonous',
-    'Lethal',
-    'Hazardous',
-    'Dangerous',
-    'Harmful'
+    'safe in small doses',
+    'medical',
+    'harmless',
+    'benign',
+    'low-risk',
 ]
+
 axis1_neg = [
-    'Safe',
-    'Harmless',
-    'Non-toxic',
-    'Benign',
-    'Edible',
-    'Nonhazardous'
+    'toxic',
+    'reactive',
+    'lethal',
+    'hazardous',
+    'dangerous',
+    'harmful',
 ]
 axis_safety = make_axis(axis1_pos, axis1_neg, model)
 
@@ -90,7 +90,7 @@ plt.scatter(df_scored["x"], df_scored["y"])
 
 # Label each point with the chemical name
 for i, txt in enumerate(df_scored["name"]):
-    plt.annotate('  ' + txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=5, alpha=0.7)
+    plt.annotate('   ' + txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=5, alpha=0.7)
 
 # Axis labels and title
 plt.xlabel("Safety Axis (Hazardous  →  Safe)")
@@ -113,5 +113,4 @@ os.makedirs(output_dir, exist_ok=True)
 plt.savefig(os.path.join(output_dir, "chemical_semaxis.png"), dpi=300, bbox_inches="tight")
 
 # Show plot
-plt.savefig('figures/semaxis.png')
 plt.show()
