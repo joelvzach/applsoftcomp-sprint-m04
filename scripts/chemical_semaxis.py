@@ -11,37 +11,23 @@ df = pd.read_csv('../data/chemicals.csv')
 model = SentenceTransformer("all-mpnet-base-v2")  
 
 def make_axis(positive_words, negative_words, embedding_model):
-    """Return a unit-length semantic axis from two word sets."""
-
-    # get the embeddings for each pole
     pos_emb = embedding_model.encode(positive_words, normalize_embeddings=True)
     neg_emb = embedding_model.encode(negative_words, normalize_embeddings=True)
 
-    # Compute the pole centroids
-    # axis = 0 means "average across the rows, keep the columns (dims) intact"
-    # since pos_emb is shape (num_pos_words, embedding_dim), the mean is shape (embedding_dim,)
-    pole_pos = pos_emb.mean(axis=0)  # (embedding_dim,)
-    pole_neg = neg_emb.mean(axis=0)  # (embedding_dim,)
+    pole_pos = pos_emb.mean(axis=0)
+    pole_neg = neg_emb.mean(axis=0)
 
-    # The axis is the difference between the two centroids, normalized to unit length.
     v = pole_pos - pole_neg
-
-    v = v / (np.linalg.norm(v) + 1e-10)  # add small epsilon to prevent division by zero
+    v = v / (np.linalg.norm(v) + 1e-10)
 
     return v / (np.linalg.norm(v) + 1e-10)
 
 def score_words(words, axis, embedding_model):
-    """Project each word onto the axis. Returns one score per word."""
-
     emb = embedding_model.encode(list(words), normalize_embeddings=True)
-
-    # Projection to the axis is just a dot product (since the axis is unit-length).
-    # @ is matrix multiplication in NumPy. Since `emb` is shape (num_words, embedding_dim) and `axis` is shape (embedding_dim,), the result is shape (num_words,), which is exactly what we want: one score per word.
     proj = emb @ axis
-
     return proj
 
-# create first axis for safety of chemicals i.e. dangerous or safe
+# create first axis (safety)
 axis1_pos = [
     'safe in small doses',
     'medical',
@@ -60,7 +46,7 @@ axis1_neg = [
 ]
 axis_safety = make_axis(axis1_pos, axis1_neg, model)
 
-# create second axis for utility of chemicals i.e. biological or industrial use
+# create second axis (utility)
 axis2_pos = [
     'Nutrient',
     'Biological',
@@ -79,38 +65,59 @@ axis2_neg = [
 ]
 axis_utility = make_axis(axis2_pos, axis2_neg, model)
 
-# socre the chemicals based on axes and add to dataframe
+# score the chemicals
 x = score_words(df["name"].tolist(), axis_safety, model)
 y = score_words(df["name"].tolist(), axis_utility, model)
 df_scored = df.assign(x=x, y=y)
 
-# Create figure
-plt.figure(figsize=(10, 8))
-plt.scatter(df_scored["x"], df_scored["y"])
+# --- NEW: color by class ---
+classes = df_scored["class"].unique()
+cmap = plt.get_cmap("tab10")  # good categorical colormap
 
-# Label each point with the chemical name
+class_to_color = {cls: cmap(i % 10) for i, cls in enumerate(classes)}
+
+# Create figure
+plt.figure(figsize=(12, 10))
+
+# Plot each class separately (so legend works cleanly)
+for cls in classes:
+    subset = df_scored[df_scored["class"] == cls]
+    plt.scatter(
+        subset["x"],
+        subset["y"],
+        label=cls,
+        color=class_to_color[cls],
+        alpha=0.7
+    )
+
+# Label each point (optional: still cluttered for large datasets)
 for i, txt in enumerate(df_scored["name"]):
-    plt.annotate('   ' + txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=5, alpha=0.7)
+    plt.annotate('   ' + txt,
+                 (df_scored["x"][i], df_scored["y"][i]),
+                 fontsize=5,
+                 alpha=0.6)
 
 # Axis labels and title
 plt.xlabel("Safety Axis (Hazardous  →  Safe)")
 plt.ylabel("Utility Axis (Industrial  →  Biological)")
 plt.title("Chemical SemAxis Visualization")
 
-# Draw reference lines at origin
-plt.axhline(0)
-plt.axvline(0)
+# Reference lines
+plt.axhline(0, linewidth=1)
+plt.axvline(0, linewidth=1)
 
-# Improve layout
+# Legend
+plt.legend(title="Class", bbox_to_anchor=(1.05, 1), loc='upper left')
+
+# Grid + layout
 plt.grid(True)
 plt.tight_layout()
 
-# Figure output directory
+# Save figure
 output_dir = "../figs"
 os.makedirs(output_dir, exist_ok=True)
+plt.savefig(os.path.join(output_dir, "chemical_semaxis.png"),
+            dpi=300,
+            bbox_inches="tight")
 
-# Save figure
-plt.savefig(os.path.join(output_dir, "chemical_semaxis.png"), dpi=300, bbox_inches="tight")
-
-# Show plot
 plt.show()
