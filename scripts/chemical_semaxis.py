@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
+import os
 
 # import data set
 df = pd.read_csv('../data/chemicals.csv')
@@ -40,26 +41,24 @@ def score_words(words, axis, embedding_model):
 
     return proj
 
-# create first axis for stability of chemicals i.e. dangerous or safe
+# create first axis for safety of chemicals i.e. dangerous or safe
 axis1_pos = [
-    'Explosive',
     'Toxic',
-    'Corrosive',
-    'Caustic'
+    'Poisonous',
     'Lethal',
     'Hazardous',
-    'Reactive',
+    'Dangerous',
+    'Harmful'
 ]
-
 axis1_neg = [
-    'Inert',
-    'Stable',
-    'Harmless',
-    'Edible',
     'Safe',
-    'Benign'
+    'Harmless',
+    'Non-toxic',
+    'Benign',
+    'Edible',
+    'Nonhazardous'
 ]
-axis_stability = make_axis(axis1_pos, axis1_neg, model)
+axis_safety = make_axis(axis1_pos, axis1_neg, model)
 
 # create second axis for utility of chemicals i.e. biological or industrial use
 axis2_pos = [
@@ -81,7 +80,7 @@ axis2_neg = [
 axis_utility = make_axis(axis2_pos, axis2_neg, model)
 
 # socre the chemicals based on axes and add to dataframe
-x = score_words(df["name"].tolist(), axis_stability, model)
+x = score_words(df["name"].tolist(), axis_safety, model)
 y = score_words(df["name"].tolist(), axis_utility, model)
 df_scored = df.assign(x=x, y=y)
 
@@ -91,10 +90,10 @@ plt.scatter(df_scored["x"], df_scored["y"])
 
 # Label each point with the chemical name
 for i, txt in enumerate(df_scored["name"]):
-    plt.annotate(txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=8, alpha=0.7)
+    plt.annotate('  ' + txt, (df_scored["x"][i], df_scored["y"][i]), fontsize=5, alpha=0.7)
 
 # Axis labels and title
-plt.xlabel("Stability Axis (Hazardous  →  Safe)")
+plt.xlabel("Safety Axis (Hazardous  →  Safe)")
 plt.ylabel("Utility Axis (Industrial  →  Biological)")
 plt.title("Chemical SemAxis Visualization")
 
@@ -105,6 +104,13 @@ plt.axvline(0)
 # Improve layout
 plt.grid(True)
 plt.tight_layout()
+
+# Figure output directory
+output_dir = "../figs"
+os.makedirs(output_dir, exist_ok=True)
+
+# Save figure
+plt.savefig(os.path.join(output_dir, "chemical_semaxis.png"), dpi=300, bbox_inches="tight")
 
 # Show plot
 plt.savefig('figures/semaxis.png')
