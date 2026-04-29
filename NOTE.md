@@ -1,5 +1,10 @@
 # Observations — Semantic Axes on Chemicals Dataset
 
+## Team Members
+
+- Joel V Zachariah
+- Cameron Kranz
+
 ## Axis Design Rationale
 
 ### Axis 1: Safety (Hazardous → Safe)
