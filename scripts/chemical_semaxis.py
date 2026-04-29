@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 import os
 
 # import data set
-df = pd.read_csv('../data/chemicals.csv')
+df = pd.read_csv('data/chemicals.csv')
 
 # create sentence transformer model
 model = SentenceTransformer("all-mpnet-base-v2")  
